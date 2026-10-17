@@ -9,7 +9,10 @@
  * vendored libraries because they never change and they're 2.9 MB — which is
  * the difference between a usable phone app and a slow one.
  */
-const CACHE = "hockey-gm-v1";
+const CACHE = "hockey-gm-v2";
+// The three games and the menu share ONE origin on the hub, so they share CacheStorage.
+// Activation clears only OUR old versions ("hockey-gm-*"); deleting every other cache wiped
+// the sibling games' offline copies each time any one of them updated.
 const base = new URL("./", self.registration.scope).pathname;
 const ASSETS = [
   base,
@@ -36,7 +39,7 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k.indexOf("hockey-gm-") === 0).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

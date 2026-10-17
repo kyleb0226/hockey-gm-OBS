@@ -33,6 +33,10 @@ for that sport, not translated knob-for-knob.
   body padding (standalone iOS draws under the notch otherwise). `sw.js` uses **relative** paths so it works at
   a domain root, a GitHub Pages subpath or a hub subpath.
 - The mount is wrapped in an `ErrorBoundary` (reload / copy error) so a render crash can't blank the page.
+- **Shared origin on the hub.** A tiny "data meter" `<script>` in each `<head>` (keep identical; only `SLUG`
+  differs) records page-load network transfer into localStorage `pgm-hub:net`, read by the hub's **Data &
+  storage** panel. Every `sw.js` deletes only caches with **its own prefix** on activate — deleting "every cache
+  that isn't mine" wiped the sibling games' offline copies.
 - **The harnesses never render.** Any UI change needs a browser pass — load `index.html?v=N` with a fresh `N`
   (the service worker can hand back a stale bundle). Add a `CHECKS` case (and `EXPORTS` entry) for every feature.
 

@@ -28,6 +28,38 @@
   ::-webkit-scrollbar-thumb { background:#1e2b45; border-radius:6px; }
   .tnum { font-variant-numeric: tabular-nums; }
 </style>
+<script>
+/* Pocket GM data meter (shared by all three games; keep identical). Records how much each
+   page load actually pulled over the network into localStorage "pgm-hub:net", which the
+   hub's "Data & storage" panel reads. transferSize is 0 for anything served from the
+   service-worker / HTTP cache, so offline and cached launches cost (and record) nothing.
+   Pure bookkeeping: never touches a save, never makes a request of its own. */
+(function(){
+  var SLUG = "hockey";
+  function sum(){
+    try{
+      var n = performance.getEntriesByType("navigation").concat(performance.getEntriesByType("resource"));
+      var net = 0, cached = 0;
+      n.forEach(function(e){ if(e.transferSize > 0) net += e.transferSize; else cached += (e.decodedBodySize || 0); });
+      return { net: net, cached: cached };
+    }catch(e){ return null; }
+  }
+  var recorded = null;
+  function record(){
+    var s = sum(); if(!s) return;
+    try{
+      var all = JSON.parse(localStorage.getItem("pgm-hub:net") || "{}");
+      var r = all[SLUG] || { total: 0, loads: 0 };
+      if(recorded){ r.total -= recorded.net; } else { r.loads++; }   // re-record this load, don't double count
+      r.total += s.net; r.last = s.net; r.lastCached = s.cached; r.at = Date.now();
+      all[SLUG] = r; recorded = s;
+      localStorage.setItem("pgm-hub:net", JSON.stringify(all));
+    }catch(e){}
+  }
+  window.addEventListener("load", function(){ setTimeout(record, 1500); });
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "hidden") record(); });
+})();
+</script>
 </head>
 <body class="bg-[#0b1220] text-slate-100">
 <div id="root"></div>
